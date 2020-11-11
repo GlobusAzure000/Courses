@@ -362,30 +362,132 @@ namespace MultiThreading
         #region Sample 8. Synchronization - events
         private static AutoResetEvent aeEvent = new AutoResetEvent(false);
 
-        private static List<string> queue = new List<string>();
+        private static AutoResetEvent aeEvent2 = new AutoResetEvent(true);
+
+        private static Queue<string> queue = new Queue<string>();
 
         private static void SimplePublisher()
         {
-            Random rnd = new Random();
-            for (int i = 0; i < 10; ++i)
-            {
-
-                Console.WriteLine("[P] Publisher thinks...");
-                Thread.Sleep(rnd.Next(1, 5) * 100); // waiting some random time to simulate irregularity
+            string message = string.Empty;
+            for (int i = 0; i < 3 && !message.Equals("QUIT"); ++i)
+            {                
+                Console.Write("[P] Publisher waits - type something: ");
+                message = Console.ReadLine();
+                
                 lock (queue)
                 {
-                    queue.Add($"This is my message no. {i + 1}");
+                    queue.Enqueue($"{message}");
+                    aeEvent.Set();
                 }
-                Console.WriteLine("[P] Message published");
+            }
+
+            queue.Enqueue("QUIT");
+            aeEvent.Set();
+        }
+
+        private static void SimpleConsumer()
+        {
+            string message = string.Empty;
+            while (!message.Equals("QUIT"))
+            {
+                aeEvent.WaitOne(); 
+                lock (queue)
+                {
+                    if (queue.Count > 0)
+                    {
+                        message = queue.Dequeue();
+                        Console.WriteLine($"[C] Message received: {message}");
+                    }
+                }
+                
+            }
+        }
+
+        private static void SimplePublisherTwoEvents()
+        {
+ 
+            string message = string.Empty;
+            for (int i = 0; i < 3 && !message.Equals("QUIT"); ++i)
+            {
+                aeEvent2.WaitOne();
+                Console.Write("[P] Publisher waits - type something: ");
+                message = Console.ReadLine();
+
+                lock (queue)
+                {
+                    queue.Enqueue($"{message}");                    
+                }
+                aeEvent.Set();
+            }
+
+            queue.Enqueue("QUIT");
+            aeEvent.Set();
+        }
+
+        private static void SimpleConsumerTwoEvents()
+        {
+            string message = string.Empty;
+            while (!message.Equals("QUIT"))
+            {
+                aeEvent.WaitOne();
+                lock (queue)
+                {
+                    if (queue.Count > 0)
+                    {
+                        message = queue.Dequeue();                        
+                        Console.WriteLine($"[C] Message received: {message}");
+                        aeEvent2.Set();
+
+                    }
+                }
 
             }
         }
 
+        private static void SimplePulishConsume()
+        {
+            Thread consumer = new Thread(SimpleConsumer);
+            Thread publisher = new Thread(SimplePublisher);
+
+            consumer.Start();
+            publisher.Start();
+        }
+
+        private static void SimplePulishConsumeManualReset()
+        {
+            Thread consumer = new Thread(SimpleConsumerTwoEvents);
+            Thread publisher = new Thread(SimplePublisherTwoEvents);
+
+            consumer.Start();
+            publisher.Start();
+        }
+
         #endregion
 
+        #region Sample 9. Semaphores
+        static Semaphore sem = new Semaphore(3, 3);    // Capacity of 3 and 3 "empty slots"
+
+        public static void Semaphores()
+        {
+            for (int i = 1; i <= 5; i++)
+            {
+                new Thread(SemapthorEnterThread).Start(i);
+            }
+        }
+
+        static void SemapthorEnterThread(object id)
+        {
+            Console.WriteLine(id + " wants to enter");
+            sem.WaitOne();
+            Console.WriteLine(id + " is in!");           // Only three threads
+            Thread.Sleep(1000 * (int)id);               // can be here at
+            Console.WriteLine(id + " is leaving");       // a time.
+            sem.Release();
+        }
+        #endregion
         static void Main(string[] args)
         {
-            SimpleSyncLock();
+            Semaphores();
         }
     }
 }

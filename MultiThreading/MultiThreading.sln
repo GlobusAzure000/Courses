@@ -3,9 +3,13 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.30611.23
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MultiThreading.NETCore", "MultiThreading\MultiThreading.NETCore.csproj", "{5A1F7565-9855-478D-9415-DD21241A8B40}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MultiThreading.NETCore", "MultiThreading\MultiThreading.NETCore.csproj", "{5A1F7565-9855-478D-9415-DD21241A8B40}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MultiThreading.NETFramework", "MultiThreading.NETFramework\MultiThreading.NETFramework.csproj", "{FA56B004-E173-4D11-8222-344B841C5876}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MutexPublisher.NETFramework", "MutexPublisher.NETFramework\MutexPublisher.NETFramework.csproj", "{63B420A5-F261-44A6-85D8-905A7C336ED4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MutexConsumer.NETFramework", "MutexConsumer.NETFramework\MutexConsumer.NETFramework.csproj", "{292EDE6E-3388-48E4-8869-23F99566AF41}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +25,14 @@ Global
 		{FA56B004-E173-4D11-8222-344B841C5876}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{FA56B004-E173-4D11-8222-344B841C5876}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{FA56B004-E173-4D11-8222-344B841C5876}.Release|Any CPU.Build.0 = Release|Any CPU
+		{63B420A5-F261-44A6-85D8-905A7C336ED4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{63B420A5-F261-44A6-85D8-905A7C336ED4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{63B420A5-F261-44A6-85D8-905A7C336ED4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{63B420A5-F261-44A6-85D8-905A7C336ED4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{292EDE6E-3388-48E4-8869-23F99566AF41}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{292EDE6E-3388-48E4-8869-23F99566AF41}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{292EDE6E-3388-48E4-8869-23F99566AF41}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{292EDE6E-3388-48E4-8869-23F99566AF41}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
