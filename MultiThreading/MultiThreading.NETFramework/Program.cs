@@ -97,6 +97,28 @@ namespace MultiThreading
         }
         #endregion
 
+        #region Sample 2-a. Starting thread - other 
+
+        private static void ThreadWithRecoursion(int step)
+        {
+            Console.WriteLine($"Step: {step}");
+            ThreadWithRecoursion(step + 1);
+        }
+
+        private static void ThreadWithStackEntryPoint()
+        {
+            int[] arr = new int[1000];
+            ThreadWithRecoursion(1);
+
+        }
+
+        private static void DifferentWaysToStart()
+        {
+            Thread t = new Thread(ThreadWithStackEntryPoint, 300000); // Demostrating stack oferflow
+            t.Start();
+        }
+        #endregion
+
         #region Sample 3. Waiting the thread
         private static void CookingEggs()
         {
@@ -143,9 +165,25 @@ namespace MultiThreading
             Console.WriteLine("Breakfast ready!");
         }
 
+        private static void CookBreakfastInHurry()
+        {            
+            Thread tEggs = new Thread(CookingEggs);
+            Thread tBacon = new Thread(FryingBacon);
+
+            tEggs.Start();
+            tBacon.Start();
+
+            int weCanWait = 6000;
+
+            bool isEggsTerminated = tEggs.Join(weCanWait);
+            bool isBaconTerminated = tBacon.Join(weCanWait);
+
+            Console.WriteLine($"Breakfast ready: eggs - {isEggsTerminated}, bacon - {isBaconTerminated}");
+        }
+
         #endregion
 
-        #region Sample 4. Thread properties
+        #region Sample 4. Thread priorities
 
         private static void SomeWork(object args)
         {
@@ -193,7 +231,48 @@ namespace MultiThreading
         }
         #endregion
 
-        #region Sample 6. Aborting the thread
+        #region Sample 6. Thread properties
+        private static void ThreadPropertiesEntryPoint()
+        {
+            Console.WriteLine($"ThreadProperties started: {Thread.CurrentThread.Name}");
+
+            for(int i = 0; i < 20; ++i)
+            {
+                Console.WriteLine($"still working - step {i}");
+                Thread.Sleep(500);
+            }
+
+            Console.WriteLine("ThreadProperties stopped");
+        }
+
+        private static void ThreadProperties()
+        {
+            Thread tProperties = new Thread(ThreadPropertiesEntryPoint);
+            tProperties.Name = "Thread with properties";
+
+            Console.WriteLine($"Is Alive: {tProperties.IsAlive}");
+            Console.WriteLine($"Is Background: {tProperties.IsBackground}");
+            Console.WriteLine($"Thread ID: {tProperties.ManagedThreadId}");
+            Console.WriteLine($"Thread State: {tProperties.ThreadState}");
+            Console.WriteLine($"Thread Name: {tProperties.Name}");
+
+            tProperties.Start();
+
+            Console.WriteLine($"Is Alive: {tProperties.IsAlive}");
+            Console.WriteLine($"Thread State: {tProperties.ThreadState}");
+
+            tProperties.Join();
+
+            Console.WriteLine($"Is Alive: {tProperties.IsAlive}");
+            Console.WriteLine($"Thread State: {tProperties.ThreadState}");
+
+
+
+
+        }
+        #endregion
+
+        #region Sample 7. Aborting the thread
 
         private static void SomeLongJob()
         {
@@ -487,7 +566,7 @@ namespace MultiThreading
         #endregion
         static void Main(string[] args)
         {
-            Semaphores();
+            CookBreakfastInHurry();
         }
     }
 }
