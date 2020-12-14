@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Net.NetworkInformation;
 using System.Threading;
 
@@ -8,6 +9,8 @@ namespace MultiThreading
 {
     class Program
     {
+        
+
         #region Sample 1. Starting simple thread
         private static void SimpleThreadEntryPoint()
         {
@@ -112,10 +115,69 @@ namespace MultiThreading
 
         }
 
-        private static void DifferentWaysToStart()
+        private static void StartWithStackSize()
         {
             Thread t = new Thread(ThreadWithStackEntryPoint, 300000); // Demostrating stack oferflow
             t.Start();
+        }
+
+        private static void StartwithThreadPool()
+        {
+            int procCount = Environment.ProcessorCount;
+            bool maxThreadsSet = ThreadPool.SetMaxThreads(workerThreads: procCount + 1, completionPortThreads: procCount);
+
+            int workerThreads = 0;
+            int complThreads = 0;
+            ThreadPool.GetAvailableThreads(out workerThreads, out complThreads);
+
+            Console.WriteLine($"Available threads: workerThreads {workerThreads}, complThreads {complThreads}");
+        }
+
+        private static void EmptyEntryPoint(object callback)
+        {
+            int i = 1000;
+            while(i --> 0)
+            {
+                Thread.Sleep(100);
+            }
+        }
+
+        private static long EvaluateTimeStartWithThread(int count)
+        {
+            Stopwatch sw = new Stopwatch();
+            sw.Start();
+            int i = count;
+            while(i --> 0)
+            {
+                var t = new Thread(EmptyEntryPoint);
+                t.Start();
+            }
+            sw.Stop();
+
+            return sw.ElapsedMilliseconds;
+        }
+
+        private static long EvaluateTimeStartWithThreadPool(int count)
+        {
+            Stopwatch sw = new Stopwatch();
+            sw.Start();
+            int i = count;
+            while (i-- > 0)
+            {
+                ThreadPool.QueueUserWorkItem(new WaitCallback(EmptyEntryPoint));
+            }
+            sw.Stop();
+
+            return sw.ElapsedMilliseconds;
+        }
+
+        private static void CompareTimeThread_vs_ThreadPool()
+        {
+            long timeThreads = EvaluateTimeStartWithThread(1000);
+            long timePool = EvaluateTimeStartWithThreadPool(1000);
+
+            Console.WriteLine($"Threads: {timeThreads}ms vs Pool: {timePool}ms");
+
         }
         #endregion
 
@@ -367,7 +429,7 @@ namespace MultiThreading
 
         #endregion
 
-        #region Sample 7. Synchronization - lock
+        #region Sample 8. Synchronization - lock
 
         private static object simpleLock = new object();
 
@@ -438,7 +500,7 @@ namespace MultiThreading
         }
         #endregion
 
-        #region Sample 8. Synchronization - events
+        #region Sample 9. Synchronization - events
         private static AutoResetEvent aeEvent = new AutoResetEvent(false);
 
         private static AutoResetEvent aeEvent2 = new AutoResetEvent(true);
@@ -525,8 +587,8 @@ namespace MultiThreading
 
         private static void SimplePulishConsume()
         {
-            Thread consumer = new Thread(SimpleConsumer);
-            Thread publisher = new Thread(SimplePublisher);
+            Thread consumer = new Thread(SimpleConsumerTwoEvents);
+            Thread publisher = new Thread(SimplePublisherTwoEvents);
 
             consumer.Start();
             publisher.Start();
@@ -543,7 +605,7 @@ namespace MultiThreading
 
         #endregion
 
-        #region Sample 9. Semaphores
+        #region Sample 10. Synchronization - semaphores
         static Semaphore sem = new Semaphore(3, 3);    // Capacity of 3 and 3 "empty slots"
 
         public static void Semaphores()
@@ -562,11 +624,13 @@ namespace MultiThreading
             Thread.Sleep(1000 * (int)id);               // can be here at
             Console.WriteLine(id + " is leaving");       // a time.
             sem.Release();
+
+            
         }
         #endregion
         static void Main(string[] args)
         {
-            CookBreakfastInHurry();
+            CompareTimeThread_vs_ThreadPool();
         }
     }
 }
