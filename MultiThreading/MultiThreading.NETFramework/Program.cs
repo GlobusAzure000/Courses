@@ -500,7 +500,7 @@ namespace MultiThreading
         }
         #endregion
 
-        #region Sample 9. Synchronization - events
+        #region Sample 9-a Synchronization - AutoResetEvent
         private static AutoResetEvent aeEvent = new AutoResetEvent(false);
 
         private static AutoResetEvent aeEvent2 = new AutoResetEvent(true);
@@ -585,7 +585,7 @@ namespace MultiThreading
             }
         }
 
-        private static void SimplePulishConsume()
+        private static void SimplePublishConsume()
         {
             Thread consumer = new Thread(SimpleConsumerTwoEvents);
             Thread publisher = new Thread(SimplePublisherTwoEvents);
@@ -601,6 +601,38 @@ namespace MultiThreading
 
             consumer.Start();
             publisher.Start();
+        }
+
+        #endregion
+
+        #region Sample 9-b Synchronization - ManualResetEvent
+        #endregion
+
+        #region Sample 9-c Synchronization - CountdownEvent
+        private static CountdownEvent cdEvent = new CountdownEvent(5);
+
+        private static void CountdownEventThread()
+        {
+            int i = 10;
+            while(i --> 0)
+            {
+                Console.WriteLine($"Thread {Thread.CurrentThread.ManagedThreadId} - {i}");
+                Thread.Sleep(100);
+            }
+            cdEvent.Signal();
+        }
+
+        private static void SampleCountdownEvent()
+        {
+            for(int i = 0; i < 5; ++i)
+            {
+                var t = new Thread(CountdownEventThread);
+                t.Start();
+            }
+
+            cdEvent.Wait();
+
+            Console.WriteLine("All threads completed");
         }
 
         #endregion
@@ -630,7 +662,7 @@ namespace MultiThreading
         #endregion
         static void Main(string[] args)
         {
-            CompareTimeThread_vs_ThreadPool();
+            SampleCountdownEvent();
         }
     }
 }
