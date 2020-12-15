@@ -8,8 +8,7 @@ using System.Threading;
 namespace MultiThreading
 {
     class Program
-    {
-        
+    {       
 
         #region Sample 1. Starting simple thread
         private static void SimpleThreadEntryPoint()
@@ -606,6 +605,36 @@ namespace MultiThreading
         #endregion
 
         #region Sample 9-b Synchronization - ManualResetEvent
+        private static ManualResetEvent meEvent = new ManualResetEvent(false);
+
+
+        private static void ManualResetEventThread()
+        {
+            int i = 10000;
+            while(i --> 0)
+            {
+                meEvent.WaitOne();
+                Console.WriteLine($"Steps left {i}");
+                Thread.Sleep(10);
+            }
+        }
+
+        private static void ManualResetEvent()
+        {
+            var t = new Thread(ManualResetEventThread);
+            t.Start();
+
+            int i = 10;
+            while(i --> 0)
+            {
+                Thread.Sleep(1000);
+                meEvent.Reset();
+                Thread.Sleep(1000);
+                meEvent.Set();
+            }
+        }
+
+
         #endregion
 
         #region Sample 9-c Synchronization - CountdownEvent
@@ -660,9 +689,230 @@ namespace MultiThreading
             
         }
         #endregion
+
+        #region Sample 11. Deadlocks
+
+        private static List<string> log1 = new List<string>();
+        private static List<int> log2 = new List<int>();
+
+        private static object lockLog1 = new object();
+        private static object lockLog2 = new object();
+
+        private static void DeadlockThread1()
+        {
+            Random rnd = new Random();
+            int i = 10000;
+            while(i --> 0)
+            {
+                int number = rnd.Next(1, 10000);
+                string text = $"Next value is: {number}";
+
+                lock (lockLog1)
+                {
+                    Console.WriteLine($"[{Thread.CurrentThread.ManagedThreadId}]: lock 1 locked");
+                    lock(lockLog2)
+                    {
+                        Console.WriteLine($"[{Thread.CurrentThread.ManagedThreadId}]: lock 2 locked");
+                        log1.Add(text);
+                        log2.Add(number);
+                        Console.WriteLine($"[{Thread.CurrentThread.ManagedThreadId}]: {number}");
+                    }
+                }
+            }
+        }
+
+        private static void DeadlockThread2()
+        {
+            Random rnd = new Random();
+            int i = 10000;
+            while (i --> 0)
+            {
+                int number = rnd.Next(1, 10000);
+                string text = $"Next value is: {number}";
+
+                lock (lockLog2)
+                {
+                    Console.WriteLine($"[{Thread.CurrentThread.ManagedThreadId}]: lock 2 locked");
+                    lock (lockLog1)
+                    {
+                        Console.WriteLine($"[{Thread.CurrentThread.ManagedThreadId}]: lock 1 locked");
+                        log2.Add(number);
+                        log1.Add(text);
+                        Console.WriteLine($"[{Thread.CurrentThread.ManagedThreadId}]: {number}");
+                    }
+                }
+            }
+        }
+
+        private static void DeadlockExamle()
+        {
+            var t1 = new Thread(DeadlockThread1);
+            var t2 = new Thread(DeadlockThread2);
+
+            t1.Start();
+            t2.Start();
+
+            t1.Join();
+            t2.Join();
+        }
+
+        private static void ConcurentTryEnterThread1()
+        {
+            Random rnd = new Random();
+            int i = 10000;
+            while (i-- > 0)
+            {
+                int number = rnd.Next(1, 10000);
+                string text = $"Next value is: {number}";
+
+                bool lock1Taken = false;
+                Monitor.TryEnter(lockLog1, ref lock1Taken);
+                if (lock1Taken)
+                {
+                    bool lock2Taken = false;
+                    Console.WriteLine($"[{Thread.CurrentThread.ManagedThreadId}]: lock 1 locked");
+                    Monitor.TryEnter(lockLog2, ref lock2Taken);
+                    if (lock2Taken)
+                    {
+                        Console.WriteLine($"[{Thread.CurrentThread.ManagedThreadId}]: lock 2 locked");
+                        log1.Add(text);
+                        log2.Add(number);
+                        Console.WriteLine($"[{Thread.CurrentThread.ManagedThreadId}]: {number}");
+
+                        Monitor.Exit(lockLog2);
+                    }
+
+                    Monitor.Exit(lockLog1);
+                }
+            }
+        }
+
+        private static void ConcurentTryEnterThread2()
+        {
+            Random rnd = new Random();
+            int i = 10000;
+            while (i-- > 0)
+            {
+                int number = rnd.Next(1, 10000);
+                string text = $"Next value is: {number}";
+
+                bool lock2Taken = false;
+                Monitor.TryEnter(lockLog2, ref lock2Taken);
+                if (lock2Taken)
+                {
+                    bool lock1Taken = false;
+                    Console.WriteLine($"[{Thread.CurrentThread.ManagedThreadId}]: lock 2 locked");
+                    Monitor.TryEnter(lockLog1, ref lock1Taken);
+                    if (lock1Taken)
+                    {
+                        Console.WriteLine($"[{Thread.CurrentThread.ManagedThreadId}]: lock 1 locked");
+                        log1.Add(text);
+                        log2.Add(number);
+                        Console.WriteLine($"[{Thread.CurrentThread.ManagedThreadId}]: {number}");
+
+                        Monitor.Exit(lockLog1);
+                    }
+
+                    Monitor.Exit(lockLog2);
+                }
+            }
+        }
+
+        private static void DeadlockResolutionExample1()
+        {
+            var t1 = new Thread(ConcurentTryEnterThread1);
+            var t2 = new Thread(ConcurentTryEnterThread2);
+
+            t1.Start();
+            t2.Start();
+
+            t1.Join();
+            t2.Join();
+        }
+
+        private static void ConcurentTryEnterThread1_Wait()
+        {
+            int waitMs = 3000;
+
+            Random rnd = new Random();
+            int i = 10000;
+            while (i-- > 0)
+            {
+                int number = rnd.Next(1, 10000);
+                string text = $"Next value is: {number}";
+
+                bool lock1Taken = false;
+                Monitor.TryEnter(lockLog1, waitMs, ref lock1Taken);
+                if (lock1Taken)
+                {
+                    bool lock2Taken = false;
+                    Console.WriteLine($"[{Thread.CurrentThread.ManagedThreadId}]: lock 1 locked");
+                    Monitor.TryEnter(lockLog2, waitMs, ref lock2Taken);
+                    if (lock2Taken)
+                    {
+                        Console.WriteLine($"[{Thread.CurrentThread.ManagedThreadId}]: lock 2 locked");
+                        log1.Add(text);
+                        log2.Add(number);
+                        Console.WriteLine($"[{Thread.CurrentThread.ManagedThreadId}]: {number}");
+
+                        Monitor.Exit(lockLog2);
+                    }
+
+                    Monitor.Exit(lockLog1);
+                }
+            }
+        }
+
+        private static void ConcurentTryEnterThread2_Wait()
+        {
+            int waitMs = 3000;
+
+            Random rnd = new Random();
+            int i = 10000;
+            while (i-- > 0)
+            {
+                int number = rnd.Next(1, 10000);
+                string text = $"Next value is: {number}";
+
+                bool lock2Taken = false;
+                Monitor.TryEnter(lockLog2, waitMs, ref lock2Taken);
+                if (lock2Taken)
+                {
+                    bool lock1Taken = false;
+                    Console.WriteLine($"[{Thread.CurrentThread.ManagedThreadId}]: lock 2 locked");
+                    Monitor.TryEnter(lockLog1, waitMs, ref lock1Taken);
+                    if (lock1Taken)
+                    {
+                        Console.WriteLine($"[{Thread.CurrentThread.ManagedThreadId}]: lock 1 locked");
+                        log1.Add(text);
+                        log2.Add(number);
+                        Console.WriteLine($"[{Thread.CurrentThread.ManagedThreadId}]: {number}");
+
+                        Monitor.Exit(lockLog1);
+                    }
+
+                    Monitor.Exit(lockLog2);
+                }
+            }
+        }
+
+        private static void DeadlockResolutionExample2()
+        {
+            var t1 = new Thread(ConcurentTryEnterThread1_Wait);
+            var t2 = new Thread(ConcurentTryEnterThread2_Wait);
+
+            t1.Start();
+            t2.Start();
+
+            t1.Join();
+            t2.Join();
+        }
+
+
+        #endregion
         static void Main(string[] args)
         {
-            SampleCountdownEvent();
+            AbortingThread();
         }
     }
 }
